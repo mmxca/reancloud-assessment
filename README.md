@@ -1,4 +1,5 @@
-##REANCloud Assessment - Option #1##
+REANCloud Assessment - Option #1
+-----------------------------------
 
 **Objective:**
 Use CM tools such as Puppet, Ansible, or Chef to automate the installation of basic Drupal or WordPress. Setup a sample site. Automate the solution using CloudFormation template.
