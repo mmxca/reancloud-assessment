@@ -22,7 +22,7 @@ A CloudFormation template that accepts user inputs as parameters where applicabl
 You Are Here!
 
 **Iteration 2:**
-After strugling a bit with no knowledge of CloudFormation templates, a Google Search led me to https://www.youtube.com/watch?v=6R44BADNJA8 which provided a great deal of information, examples, hints, and things I hadn't thought to include in my plan.  This iteration and the next should flow smoothly and because CloudFormation is easier - at least in appearance - than I thought it would, I am revising the plan to include some additional tasks will make the solution robust and should not impact timeline.
+After struggling a bit with no knowledge of CloudFormation templates, a Google Search led me to https://www.youtube.com/watch?v=6R44BADNJA8 which provided a great deal of information, examples, hints, and things I hadn't thought to include in my plan.  This iteration and the next should flow smoothly and because CloudFormation is easier - at least in appearance - than I thought it would, I am revising the plan to include some additional tasks will make the solution robust and should not impact timeline.
 
 Working through this iteration I came across a "stock" AMI that is available for EC2 which I will use rather than a docker container.
 
