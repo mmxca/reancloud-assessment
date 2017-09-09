@@ -10,10 +10,20 @@ A CloudFormation template that accepts user inputs as parameters where applicabl
 **Plan:**
  1. Establish a GitHub repository
  2. Create CloudFormation template to establish a AmazonLinux VPC with necessary subnets
- 3. Extend CloudFormation template to establish a Docker Capable AmazonLinux VPC in the same subnet, and auto-launch the Ansible Instance
+ 3. Extend CloudFormation template to establish an Ansible Instance with an existing AMI
  4. Using the Ansible instance, configure the host installing necessary prerequisites
  5. Using Ansible, install and configure the Wordpress installation
  6. Populate the Wordpress site with some sample posts
+ 7. Add additional parameters (such as selection of 
  7. Document any necessary assumptions  & retrospectives
  8. Perform repetitive tests to ensure the assignment is completed thoroughly to match the requirements of the assessment
 
+**Iteration 1:**
+You Are Here!
+
+**Iteration 2:**
+After strugling a bit with no knowledge of CloudFormation templates, a Google Search led me to https://www.youtube.com/watch?v=6R44BADNJA8 which provided a great deal of information, examples, hints, and things I hadn't thought to include in my plan.  This iteration and the next should flow smoothly and because CloudFormation is easier - at least in appearance - than I thought it would, I am revising the plan to include some additional tasks will make the solution robust and should not impact timeline.
+
+Working through this iteration I came across a "stock" AMI that is available for EC2 which I will use rather than a docker container.
+
+One thing I should note, is that I found no reference as to how to create EC2 KeyPairs, so I created this manually through the console.  I will also reach out to the team to see if they have any expertise in that regard and can either confirm it is not possible or provide information how to accomplish this in CloudFormation.
