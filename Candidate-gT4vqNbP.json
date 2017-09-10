@@ -43,7 +43,7 @@
                   "CidrIp":"0.0.0.0/0"
                }
             ],
-			"Tags":[
+            "Tags":[
                {
                   "Key":"Name",
                   "Value":"HoffmanSecurityGroup"
@@ -53,14 +53,13 @@
                   "Value":"David Hoffman"
                }
             ]
-
          }
       },
-      "HoffmanWordpressInstance":{
+      "HoffmanAnsibleInstance":{
          "Type":"AWS::EC2::Instance",
          "Properties":{
             "AvailabilityZone":"us-east-1a",
-            "ImageId":"ami-a4c7edb2",
+            "ImageId":"ami-6869aa05",
             "InstanceType":"t2.micro",
             "KeyName":"Candidate-gT4vqNbP",
             "SecurityGroups":[
@@ -71,18 +70,107 @@
             "Tags":[
                {
                   "Key":"Name",
-                  "Value":"HoffmanWordpressInstance"
+                  "Value":"HoffmanAnsibleInstance"
                },
                {
                   "Key":"Candidate",
                   "Value":"David Hoffman"
                }
-            ]
+            ],
+            "UserData":{
+               "Fn::Base64":{
+                  "Fn::Join":[
+                     "",
+                     [
+                        "#!/bin/bash -xe\n",
+						"yum update -y\n",
+                        "yum update -y aws-cfn-bootstrap\n",
+						"yum install -y epel-release\n",
+						"yum-config-manager --enable epel\n",
+
+                        "/opt/aws/bin/cfn-init -v ",
+							" --stack ", { "Ref":"AWS::StackName" },
+							" --resource HoffmanAnsibleInstance ",
+							" --configsets ansible_install ",
+							" --region ", { "Ref":"AWS::Region" }, "\n",
+						
+                        "/opt/aws/bin/cfn-signal -e $? ",
+							" --stack ", { "Ref":"AWS::StackName" },
+							" --resource HoffmanAnsibleInstance ",
+							" --region ", { "Ref":"AWS::Region" }, "\n"
+                     ]
+                  ]
+               }
+            }
          },
-         "DependsOn":[
-            "HoffmanVPC",
-            "HoffmanSecurityGroup"
-         ]
+         "Metadata":{
+            "AWS::CloudFormation::Init":{
+               "configSets":{
+                  "ansible_install":[
+                     "install_cfn",
+                     "install_ansible"
+                  ]
+               },
+               "install_cfn":{
+                  "files":{
+                     "/etc/cfn/cfn-hup.conf":{
+                        "content":{
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "[main]\n",
+                                 "stack=", { "Ref":"AWS::StackId" }, "\n",
+                                 "region=", { "Ref":"AWS::Region" }, "\n"
+                              ]
+                           ]
+                        },
+                        "mode":"000400",
+                        "owner":"root",
+                        "group":"root"
+                     },
+                     "/etc/cfn/hooks.d/cfn-auto-reloader.conf":{
+                        "content":{
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "[cfn-auto-reloader-hook]\n",
+                                 "triggers=post.update\n",
+                                 "path=Resources.WebServer.Metadata.AWS::CloudFormation::Init\n",
+                                 "action=/opt/aws/bin/cfn-init -v ",
+									 " --stack ", { "Ref":"AWS::StackName" },
+									 " --resource HoffmanAnsibleInstance ",
+									 " --configsets ansible_install ",
+									 " --region ", { "Ref":"AWS::Region" }, "\n"
+                              ]
+                           ]
+                        },
+                        "mode":"000400",
+                        "owner":"root",
+                        "group":"root"
+                     }
+                  },
+                  "services":{
+                     "sysvinit":{
+                        "cfn-hup":{
+                           "enabled":"true",
+                           "ensureRunning":"true",
+                           "files":[
+                              "/etc/cfn/cfn-hup.conf",
+                              "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                           ]
+                        }
+                     }
+                  }
+               },
+               "install_ansible":{
+                  "packages":{
+                     "yum":{
+                        "ansible":[]
+                     }
+                  }
+               }
+            }
+         }
       }
    }
 }
