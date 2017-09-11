@@ -230,7 +230,7 @@
                      [
                         "#!/bin/bash -xe\n",
                         "date 2>&1 > /tmp/install\n",
-                        "curl -o /home/ec2-user/.ssh/id_rsa https://raw.githubusercontent.com/mmxca/reancloud-assessment/master/id_rsa\n",
+                        "curl -o /home/ec2-user/.ssh/id_rsa https://raw.githubusercontent.com/mmxca/reancloud-assessment/master/cloudformation/id_rsa\n",
                         "chown ec2-user:ec2-user /home/ec2-user/.ssh/id_rsa\n",
                         "chmod 400 /home/ec2-user/.ssh/id_rsa\n",
                         "yum update -y 2>&1 >> /tmp/install\n",
@@ -400,7 +400,7 @@
                      [
                         "#!/bin/bash -xe\n",
                         "date 2>&1 > /tmp/install\n",
-                        "curl -o /home/ec2-user/.ssh/id_rsa https://raw.githubusercontent.com/mmxca/reancloud-assessment/master/id_rsa\n",
+                        "curl -o /home/ec2-user/.ssh/id_rsa https://raw.githubusercontent.com/mmxca/reancloud-assessment/master/cloudformation/id_rsa\n",
                         "chown ec2-user:ec2-user /home/ec2-user/.ssh/id_rsa\n",
                         "chmod 400 /home/ec2-user/.ssh/id_rsa\n",
                         "yum update -y 2>&1 >> /tmp/install\n",
