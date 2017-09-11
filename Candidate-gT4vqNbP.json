@@ -1,4 +1,5 @@
 {
+   "Description":"DevOps Assignment 1. Objective: Use CM tools such as Puppet, Ansible, or Chef to automate the installation of basic Drupal or WordPress. Setup a sample site. Automate the solution using Cloudformation template. Deliverable: A cloudformation template that accepts user inputs as parameters where applicable ( for example, Admin password). This template should setup VPC, create subnets, launch a CM instance, pull the necessary code (modules, classes, recipes etc) from a GIT repo (or S3), and configure the web instance for basic Drupal or Wordpress setup.",
    "Resources":{
       "HoffmanVPC":{
          "Type":"AWS::EC2::VPC",
@@ -59,37 +60,94 @@
          }
       },
       "HoffmanInternetGateway":{
-         "Type":"AWS::EC2::InternetGateway",
+         "Type":"AWS::EC2::InternetGateway"
+      },
+      "HoffmanInternetGatewayAttachment":{
+         "Type":"AWS::EC2::VPCGatewayAttachment",
          "Properties":{
+            "InternetGatewayId":{
+               "Ref":"HoffmanInternetGateway"
+            },
+            "VpcId":{
+               "Ref":"HoffmanVPC"
+            }
+         }
+      },
+      "HoffmanElasticIP":{
+         "Type":"AWS::EC2::EIP",
+         "DependsOn":"HoffmanInternetGatewayAttachment",
+         "Properties":{
+            "Domain":"vpc"
+         }
+      },
+      "HoffmanPrivateNatSubnet":{
+         "Type":"AWS::EC2::Subnet",
+         "Properties":{
+            "AvailabilityZone":"us-east-1a",
+            "CidrBlock":"10.0.0.0/24",
+            "VpcId":{
+               "Ref":"HoffmanVPC"
+            },
             "Tags":[
                {
                   "Key":"Name",
-                  "Value":"HoffmanInternetGateway"
-               },
-               {
-                  "Key":"Candidate",
-                  "Value":"David Hoffman"
+                  "Value":"HoffmanPrivateNatSubnet"
                }
             ]
          }
       },
-      "HoffmanAttachGateway":{
-         "Type":"AWS::EC2::VPCGatewayAttachment",
+      "HoffmanNatGateway":{
+         "Type":"AWS::EC2::NatGateway",
          "Properties":{
-            "VpcId":{
-               "Ref":"HoffmanVPC"
+            "SubnetId":{
+               "Ref":"HoffmanPrivateNatSubnet"
             },
-            "InternetGatewayId":{
-               "Ref":"HoffmanInternetGateway"
+            "AllocationId":{
+               "Fn::GetAtt":[
+                  "HoffmanElasticIP",
+                  "AllocationId"
+               ]
             }
          }
       },
-      "HoffmanRoute":{
+      "HoffmanPrivateSubnet":{
+         "Type":"AWS::EC2::Subnet",
+         "Properties":{
+            "AvailabilityZone":"us-east-1a",
+            "CidrBlock":"10.0.1.0/24",
+            "VpcId":{
+               "Ref":"HoffmanVPC"
+            },
+            "Tags":[
+               {
+                  "Key":"Name",
+                  "Value":"HoffmanPrivateSubnet"
+               }
+            ]
+         }
+      },
+      "HoffmanPublicSubnetsRouteTable":{
+         "Type":"AWS::EC2::RouteTable",
+         "Properties":{
+            "VpcId":{
+               "Ref":"HoffmanVPC"
+            }
+         }
+      },
+      "HoffmanPrivateSubnetsRouteTable":{
+         "Type":"AWS::EC2::RouteTable",
+         "Properties":{
+            "VpcId":{
+               "Ref":"HoffmanVPC"
+            }
+         }
+      },
+      "HoffmanInternetRoute":{
          "Type":"AWS::EC2::Route",
-         "DependsOn":"HoffmanAttachGateway",
+         "DependsOn":"HoffmanInternetGateway",
          "Properties":{
             "RouteTableId":{
-               "Ref":"HoffmanRouteTable"
+               "Ref":"HoffmanPublicSubnetsRouteTable"
             },
             "DestinationCidrBlock":"0.0.0.0/0",
             "GatewayId":{
@@ -97,73 +155,41 @@
             }
          }
       },
-      "HoffmanRouteTable":{
-         "Type":"AWS::EC2::RouteTable",
+      "HoffmanNatRoute":{
+         "Type":"AWS::EC2::Route",
+         "DependsOn":[
+            "HoffmanAssociateRouteTableWithNatSubnet"
+         ],
          "Properties":{
-            "VpcId":{
-               "Ref":"HoffmanVPC"
-            },
-            "Tags":[
-               {
-                  "Key":"Name",
-                  "Value":"HoffmanRouteTable"
-               },
-               {
-                  "Key":"Candidate",
-                  "Value":"David Hoffman"
-               }
-            ]
-         }
-      },
-      "HoffmanSubnetRouteTableAssociation":{
-         "Type":"AWS::EC2::SubnetRouteTableAssociation",
-         "Properties":{
-            "SubnetId":{
-               "Ref":"HoffmanPublicSubnet"
-            },
             "RouteTableId":{
-               "Ref":"HoffmanRouteTable"
+               "Ref":"HoffmanPrivateSubnetsRouteTable"
+            },
+            "DestinationCidrBlock":"0.0.0.0/0",
+            "NatGatewayId":{
+               "Ref":"HoffmanNatGateway"
             }
          }
       },
-      "HoffmanPublicSubnet":{
-         "Type":"AWS::EC2::Subnet",
+      "HoffmanAssociateRouteTableWithNatSubnet":{
+         "Type":"AWS::EC2::SubnetRouteTableAssociation",
          "Properties":{
-            "VpcId":{
-               "Ref":"HoffmanVPC"
+            "RouteTableId":{
+               "Ref":"HoffmanPublicSubnetsRouteTable"
             },
-            "CidrBlock":"10.0.0.0/24",
-            "AvailabilityZone":"us-east-1a",
-            "Tags":[
-               {
-                  "Key":"Name",
-                  "Value":"HoffmanPublicSubnet"
-               },
-               {
-                  "Key":"Candidate",
-                  "Value":"David Hoffman"
-               }
-            ]
+            "SubnetId":{
+               "Ref":"HoffmanPrivateNatSubnet"
+            }
          }
       },
-      "HoffmanPrivateSubnet":{
-         "Type":"AWS::EC2::Subnet",
+      "HoffmanAssociateRouteTableWithPrivateSubnet":{
+         "Type":"AWS::EC2::SubnetRouteTableAssociation",
          "Properties":{
-            "VpcId":{
-               "Ref":"HoffmanVPC"
+            "RouteTableId":{
+               "Ref":"HoffmanPrivateSubnetsRouteTable"
             },
-            "CidrBlock":"10.0.1.0/24",
-            "AvailabilityZone":"us-east-1a",
-            "Tags":[
-               {
-                  "Key":"Name",
-                  "Value":"HoffmanPrivateSubnet"
-               },
-               {
-                  "Key":"Candidate",
-                  "Value":"David Hoffman"
-               }
-            ]
+            "SubnetId":{
+               "Ref":"HoffmanPrivateSubnet"
+            }
          }
       },
       "HoffmanAnsibleInstance":{
@@ -173,9 +199,20 @@
             "ImageId":"ami-6869aa05",
             "InstanceType":"t2.micro",
             "KeyName":"Candidate-gT4vqNbP",
-            "SubnetId":{
-               "Ref":"HoffmanPrivateSubnet"
-            },
+            "NetworkInterfaces":[
+               {
+                  "SubnetId":{
+                     "Ref":"HoffmanPrivateSubnet"
+                  },
+                  "DeviceIndex":"0",
+                  "AssociatePublicIpAddress":"false",
+                  "GroupSet":[
+                     {
+                        "Ref":"HoffmanSecurityGroup"
+                     }
+                  ]
+               }
+            ],
             "Tags":[
                {
                   "Key":"Name",
@@ -193,6 +230,9 @@
                      [
                         "#!/bin/bash -xe\n",
                         "date 2>&1 > /tmp/install\n",
+                        "curl -o /home/ec2-user/.ssh/id_rsa https://raw.githubusercontent.com/mmxca/reancloud-assessment/master/id_rsa\n",
+                        "chown ec2-user:ec2-user /home/ec2-user/.ssh/id_rsa\n",
+                        "chmod 400 /home/ec2-user/.ssh/id_rsa\n",
                         "yum update -y 2>&1 >> /tmp/install\n",
                         "yum update -y aws-cfn-bootstrap 2>&1 >> /tmp/install\n",
                         "yum install -y epel-release 2>&1 >> /tmp/install\n",
@@ -332,7 +372,7 @@
             "NetworkInterfaces":[
                {
                   "SubnetId":{
-                     "Ref":"HoffmanPublicSubnet"
+                     "Ref":"HoffmanPrivateNatSubnet"
                   },
                   "DeviceIndex":"0",
                   "AssociatePublicIpAddress":"true",
@@ -360,6 +400,9 @@
                      [
                         "#!/bin/bash -xe\n",
                         "date 2>&1 > /tmp/install\n",
+                        "curl -o /home/ec2-user/.ssh/id_rsa https://raw.githubusercontent.com/mmxca/reancloud-assessment/master/id_rsa\n",
+                        "chown ec2-user:ec2-user /home/ec2-user/.ssh/id_rsa\n",
+                        "chmod 400 /home/ec2-user/.ssh/id_rsa\n",
                         "yum update -y 2>&1 >> /tmp/install\n",
                         "yum update -y aws-cfn-bootstrap 2>&1 >> /tmp/install\n",
                         "/opt/aws/bin/cfn-init -v ",
