@@ -1,0 +1,7 @@
+- name: install php
+  become: yes
+  become_method: sudo
+  yum: name={{ item }} state=latest
+  with_items:
+    - php
+    - php-mcrypt

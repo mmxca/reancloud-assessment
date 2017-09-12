@@ -1,0 +1,22 @@
+- name: install mysql
+  become: yes
+  become_method: sudo
+  yum: name={{ item }} state=latest
+  with_items:
+      - mysql
+      - mysql-server
+      - mysql-devel
+      - mysql-libs
+      - php-mysql
+      - MySQL-python
+      - python-devel
+
+- name: Install the MySQL-python through pip
+  become: yes
+  become_method: sudo
+  pip:
+    name: "{{ item }}"
+    state: forcereinstall
+  with_items:
+    - pip
+    - MySQL-python

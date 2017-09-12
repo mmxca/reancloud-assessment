@@ -1,0 +1,7 @@
+- name: install packages
+  become: yes
+  become_method: sudo
+  yum: name={{ item }} state=latest update_cache=yes
+  with_items:
+    - wget
+    - unzip
