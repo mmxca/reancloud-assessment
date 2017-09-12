@@ -15,7 +15,7 @@
   become: yes
   become_method: sudo
   pip:
-    executable: /usr/local/bin/pip 
+    executable: /usr/bin/pip 
     name: "{{ item }}"
     state: forcereinstall
   with_items:
