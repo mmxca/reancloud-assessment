@@ -28,6 +28,8 @@ Using an existing ansible playbook for the installation of wordpress allowed me 
 
 https://www.youtube.com/watch?v=6R44BADNJA8
 
+https://lamosty.com/2015/04/08/automated-wordpress-installation-with-ansible/
+
 http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-sample-templates.html 
 
 http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html
@@ -35,4 +37,7 @@ http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.
 http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Subnets.html
 
 https://github.com/gcis/ansible_wordpress
+
+https://www.spacevatican.org/2015/12/20/cloudformation-nat-gateway/ 
+
 
