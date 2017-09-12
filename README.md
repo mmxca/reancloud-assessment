@@ -26,7 +26,12 @@ Using an existing ansible playbook for the installation of wordpress allowed me 
 **External Resources Used:**
 
 https://www.youtube.com/watch?v=6R44BADNJA8
+
 http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-sample-templates.html 
+
 http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html
+
 http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Subnets.html
+
 https://github.com/gcis/ansible_wordpress
+
