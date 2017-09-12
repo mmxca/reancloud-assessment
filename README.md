@@ -17,6 +17,7 @@ After establishing a standalone Ansible installation as well as a standalone web
 Using an existing ansible playbook for the installation of wordpress allowed me to customize it for the Amazon Linux AMI selected for installation.
 
 **Assumptions:**
+* For obvious reasons, this has only been tested with the *Candidate-gT4vqNbP* EC2 keypair
 * The JSON used is expected to be run in absence of existing systems (fresh)
 * The installation is specifically destined for the us-east-1a availaility zone.  Examples of extending this script to include this as a dynamic parameter abound.
 * The Database user is "root", password can be specified at stack creation time.
