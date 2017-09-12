@@ -23,7 +23,7 @@ Using an existing ansible playbook for the installation of wordpress allowed me 
 * The first hit to the public url will take you to the set up where you specify personal information such as email address, site name, etc.
 * Full installation takes 10-15 minutes.
 
-**External Resources Used**
+**External Resources Used:**
 https://www.youtube.com/watch?v=6R44BADNJA8
 http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-sample-templates.html 
 http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html
