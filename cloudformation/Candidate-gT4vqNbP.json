@@ -438,8 +438,7 @@
             "AWS::CloudFormation::Init":{
                "configSets":{
                   "wordpress_install":[
-                     "install_cfn",
-                     "install_wordpress_prereqs"
+                     "install_cfn"
                   ]
                },
                "install_cfn":{
@@ -504,45 +503,6 @@
                               "/etc/cfn/cfn-hup.conf",
                               "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
                            ]
-                        }
-                     }
-                  }
-               },
-               "install_wordpress_prereqs":{
-                  "packages":{
-                     "yum":{
-                        "php":[
-
-                        ],
-                        "php-mysql":[
-
-                        ],
-                        "mysql":[
-
-                        ],
-                        "mysql-server":[
-
-                        ],
-                        "mysql-devel":[
-
-                        ],
-                        "mysql-libs":[
-
-                        ],
-                        "httpd":[
-
-                        ]
-                     }
-                  },
-                  "services":{
-                     "sysvinit":{
-                        "mysql":{
-                           "enabled":"true",
-                           "ensureRunning":"true"
-                        },
-                        "httpd":{
-                           "enabled":"true",
-                           "ensureRunning":"true"
                         }
                      }
                   }
