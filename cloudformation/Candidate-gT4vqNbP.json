@@ -1,5 +1,22 @@
 {
    "Description":"DevOps Assignment 1. Objective: Use CM tools such as Puppet, Ansible, or Chef to automate the installation of basic Drupal or WordPress. Setup a sample site. Automate the solution using Cloudformation template. Deliverable: A cloudformation template that accepts user inputs as parameters where applicable ( for example, Admin password). This template should setup VPC, create subnets, launch a CM instance, pull the necessary code (modules, classes, recipes etc) from a GIT repo (or S3), and configure the web instance for basic Drupal or Wordpress setup.",
+   "Parameters":{
+      "EC2KeyPair":{
+         "Type":"AWS::EC2::KeyPair::KeyName",
+         "Description":"Name of an existing EC2 KeyPair",
+         "ConstraintDescription":"Please provide name of an existing EC2 KeyPair."
+      },
+      "MysqlDatabase":{
+         "Type":"String",
+         "Default":"wordpress",
+         "Description":"The name of the Database to use"
+      },
+      "MysqlDatabasePassword":{
+         "Type":"String",
+         "Default":"w0rdpr355",
+         "Description":"The password for the database"
+      }
+   },
    "Resources":{
       "HoffmanVPC":{
          "Type":"AWS::EC2::VPC",
@@ -194,11 +211,18 @@
       },
       "HoffmanAnsibleInstance":{
          "Type":"AWS::EC2::Instance",
+         "DependsOn":[
+            "HoffmanWordpressInstance",
+            "HoffmanNatGateway",
+            "HoffmanNatRoute"
+         ],
          "Properties":{
             "AvailabilityZone":"us-east-1a",
             "ImageId":"ami-6869aa05",
             "InstanceType":"t2.micro",
-            "KeyName":"Candidate-gT4vqNbP",
+            "KeyName":{
+               "Ref":"EC2KeyPair"
+            },
             "NetworkInterfaces":[
                {
                   "SubnetId":{
@@ -230,20 +254,19 @@
                      [
                         "#!/bin/bash -xe\n",
                         "date 2>&1 > /tmp/install\n",
-                        "curl -o /home/ec2-user/.ssh/id_rsa https://raw.githubusercontent.com/mmxca/reancloud-assessment/master/cloudformation/id_rsa\n",
-                        "chown ec2-user:ec2-user /home/ec2-user/.ssh/id_rsa\n",
-                        "chmod 400 /home/ec2-user/.ssh/id_rsa\n",
+                        "chmod 666 /tmp/install\n",
                         "yum update -y 2>&1 >> /tmp/install\n",
                         "yum update -y aws-cfn-bootstrap 2>&1 >> /tmp/install\n",
                         "yum install -y epel-release 2>&1 >> /tmp/install\n",
                         "yum-config-manager --enable epel 2>&1 >> /tmp/install\n",
+                        "yum install -y git ansible 2>&1 >> /tmp/install\n",
                         "/opt/aws/bin/cfn-init -v ",
                         " --stack ",
                         {
                            "Ref":"AWS::StackName"
                         },
                         " --resource HoffmanAnsibleInstance ",
-                        " --configsets ansible_install ",
+                        " --configsets wpress_install ",
                         " --region ",
                         {
                            "Ref":"AWS::Region"
@@ -269,10 +292,9 @@
          "Metadata":{
             "AWS::CloudFormation::Init":{
                "configSets":{
-                  "ansible_install":[
+                  "wpress_install":[
                      "install_cfn",
-                     "install_git",
-                     "install_ansible"
+                     "install_wpress"
                   ]
                },
                "install_cfn":{
@@ -314,7 +336,7 @@
                                     "Ref":"AWS::StackName"
                                  },
                                  " --resource HoffmanAnsibleInstance ",
-                                 " --configsets ansible_install ",
+                                 " --configsets wpress_install ",
                                  " --region ",
                                  {
                                     "Ref":"AWS::Region"
@@ -341,21 +363,126 @@
                      }
                   }
                },
-               "install_git":{
-                  "packages":{
-                     "yum":{
-                        "git":[
-
-                        ]
-                     }
-                  }
-               },
-               "install_ansible":{
-                  "packages":{
-                     "yum":{
-                        "ansible":[
-
-                        ]
+               "install_wpress":{
+                  "commands":{
+                     "cmd_00_start":{
+                        "command":"date >> /tmp/install"
+                     },
+                     "cmd_01_clone":{
+                        "command":"/usr/bin/git clone https://github.com/mmxca/reancloud-assessment /opt/reancloud-assessment"
+                     },
+                     "cmd_02_keyscan":{
+                        "command":{
+                           "Fn::Join":[
+                              " ",
+                              [
+                                 "ssh-keyscan -t rsa -H ",
+                                 {
+                                    "Fn::GetAtt":[
+                                       "HoffmanWordpressInstance",
+                                       "PrivateIp"
+                                    ]
+                                 },
+                                 " > /root/.ssh/known_hosts"
+                              ]
+                           ]
+                        }
+                     },
+                     "cmd_03_get_priv_key":{
+                        "command":"/usr/bin/curl -o /root/.ssh/id_rsa https://raw.githubusercontent.com/mmxca/reancloud-assessment/master/cloudformation/id_rsa"
+                     },
+                     "cmd_04_chmod_priv_key":{
+                        "command":"/bin/chmod 400 /root/.ssh/id_rsa"
+                     },
+                     "cmd_05_cp_priv_key":{
+                        "command":"/bin/cp /root/.ssh/id_rsa /home/ec2-user/.ssh/"
+                     },
+                     "cmd_06_cp_known_hosts":{
+                        "command":"/bin/cp /root/.ssh/known_hosts /home/ec2-user/.ssh/"
+                     },
+                     "cmd_07_chown_ssh":{
+                        "command":"/bin/chown -R ec2-user:ec2-user /home/ec2-user/.ssh/"
+                     },
+                     "cmd_08_edit_ansible_hosts":{
+                        "command":{
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "sed -i 's/REMOTE_IP_ADDRESS/",
+                                 {
+                                    "Fn::GetAtt":[
+                                       "HoffmanWordpressInstance",
+                                       "PrivateIp"
+                                    ]
+                                 },
+                                 "/' hosts"
+                              ]
+                           ]
+                        },
+                        "cwd":"/opt/reancloud-assessment/ansible"
+                     },
+                     "cmd_09_set_ansible_database_name":{
+                        "command":{
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "sed -i 's/###DATABASE_NAME###/",
+                                 {
+                                    "Ref":"MysqlDatabase"
+                                 },
+                                 "/' wpconfig.cfg"
+                              ]
+                           ]
+                        },
+                        "cwd":"/opt/reancloud-assessment/ansible/conf"
+                     },
+                     "cmd_10_set_ansible_database_user":{
+                        "command":{
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "sed -i 's/###DATABASE_USER###/root/' wpconfig.cfg"
+                              ]
+                           ]
+                        },
+                        "cwd":"/opt/reancloud-assessment/ansible/conf"
+                     },
+                     "cmd_11_set_ansible_mysql_root_password":{
+                        "command":{
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "sed -i 's/###DATABASE_PASSWORD###/",
+                                 {
+                                    "Ref":"MysqlDatabasePassword"
+                                 },
+                                 "/' wpconfig.cfg"
+                              ]
+                           ]
+                        },
+                        "cwd":"/opt/reancloud-assessment/ansible/conf"
+                     },
+                     "cmd_12_set_ansible_mysql_root_password":{
+                        "command":{
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "sed -i 's/###MYSQL_ROOT_PASSWORD###/",
+                                 {
+                                    "Ref":"MysqlDatabasePassword"
+                                 },
+                                 "/' mysql.cfg"
+                              ]
+                           ]
+                        },
+                        "cwd":"/opt/reancloud-assessment/ansible/conf"
+                     },
+                     "cmd_13_execute_ansible":{
+                        "command":"runuser -l ec2-user -c 'ansible-playbook -i /opt/reancloud-assessment/ansible/hosts /opt/reancloud-assessment/ansible/playbooks/deploy-wordpress.yml'  2>&1 >> /tmp/install",
+                        "cwd":"/opt/reancloud-assessment/ansible"
+                     },
+                     "cmd_99_end":{
+                        "command":"date >> /tmp/install"
                      }
                   }
                }
@@ -368,7 +495,9 @@
             "AvailabilityZone":"us-east-1a",
             "ImageId":"ami-6869aa05",
             "InstanceType":"t2.micro",
-            "KeyName":"Candidate-gT4vqNbP",
+            "KeyName":{
+               "Ref":"EC2KeyPair"
+            },
             "NetworkInterfaces":[
                {
                   "SubnetId":{
@@ -411,7 +540,7 @@
                            "Ref":"AWS::StackName"
                         },
                         " --resource HoffmanWordpressInstance ",
-                        " --configsets wordpress_install ",
+                        " --configsets cfn_install ",
                         " --region ",
                         {
                            "Ref":"AWS::Region"
@@ -437,7 +566,7 @@
          "Metadata":{
             "AWS::CloudFormation::Init":{
                "configSets":{
-                  "wordpress_install":[
+                  "cfn_install":[
                      "install_cfn"
                   ]
                },
@@ -480,7 +609,7 @@
                                     "Ref":"AWS::StackName"
                                  },
                                  " --resource HoffmanWordpressInstance ",
-                                 " --configsets wordpress_install ",
+                                 " --configsets cfn_install ",
                                  " --region ",
                                  {
                                     "Ref":"AWS::Region"
@@ -509,6 +638,26 @@
                }
             }
          }
+      }
+   },
+   "Outputs":{
+      "WorpressURL":{
+         "Value":{
+            "Fn::Join":[
+               "",
+               [
+                  "http://",
+                  {
+                     "Fn::GetAtt":[
+                        "HoffmanWordpressInstance",
+                        "PublicDnsName"
+                     ]
+                  },
+                  "/"
+               ]
+            ]
+         },
+         "Description":"URL to access WordPress Website"
       }
    }
 }
