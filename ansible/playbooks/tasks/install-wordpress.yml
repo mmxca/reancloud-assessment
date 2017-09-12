@@ -7,10 +7,10 @@
   file:
     path: /var/www/wordpress
     state: directory
-    owner: www-data
-    group: www-data
+    owner: apache
+    group: apache
 
-- name: decopress
+- name: unzip worpress
   become: yes
   become_method: sudo
   unarchive: src=/tmp/latest.zip dest=/var/www/ copy=no
@@ -19,15 +19,15 @@
   become: yes
   become_method: sudo
   lineinfile:
-    dest: /etc/apache2/sites-available/000-default.conf
+    dest: /etc/httpd/conf/httpd.conf
     regexp: 'DocumentRoot'
     line: '        DocumentRoot /var/www/wordpress'
 
-- name: restart apache2
+- name: restart httpd
   become: yes
   become_method: sudo
   service:
-    name: apache2
+    name: httpd
     state: restarted
 
 - name: create wp-config
@@ -53,6 +53,6 @@
   file:
     path: /var/www/wordpress
     state: directory
-    owner: www-data
-    group: www-data
+    owner: apache
+    group: apache
     recurse: yes
